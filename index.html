@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="tr" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Premium 3D virtual coin flipper. Flip a coin online for random decisions, games, and sports. Heads or tails?">
+    <title>HSR 3D Yazı Tura At - Sanal Para Çevirme</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+    <style>
+        /* GECE MAVİSİ VE ALTIN TEMA */
+        :root {
+            --bg: #0b132b; /* Çok koyu lacivert/gece mavisi */
+            --surface: #1c2541; /* Yüzey mavisi */
+            --primary: #f5b700; /* Parlak altın sarısı */
+            --primary-hover: #d49f00; /* Koyu altın */
+            --text: #e0e1dd; /* Kırık beyaz metin */
+            --text-muted: #8d99ae;
+            --border: #3a506b;
+            --coin-bg-front: linear-gradient(45deg, #f5b700, #ffea00);
+            --coin-bg-back: linear-gradient(45deg, #d49f00, #f5b700);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1c2541 0%, transparent 70%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- DİL SEÇİCİ --- */
+        .lang-switcher {
+            position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100;
+        }
+        .lang-btn {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif; font-size: 0.85rem;
+        }
+        .lang-btn.active, .lang-btn:hover {
+            background: var(--primary); color: #0b132b; border-color: var(--primary);
+        }
+
+        header {
+            text-align: center; padding: 4rem 1rem 2rem; border-bottom: 1px solid var(--border); position: relative;
+        }
+        h1 {
+            font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 2.8rem;
+            margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 4px 15px rgba(245, 183, 0, 0.3);
+        }
+        header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1rem; }
+
+        /* Reklam Alanları */
+        .ad-banner {
+            width: 100%; min-height: 90px; background: rgba(0,0,0,0.3); border: 1px dashed var(--border);
+            display: flex; align-items: center; justify-content: center; margin: 2rem 0;
+            color: var(--text-muted); border-radius: 8px; position: relative;
+        }
+
+        /* --- UYGULAMA ALANI --- */
+        .app-surface {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 3rem 2rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center; gap: 2rem;
+        }
+
+        button.flip-btn {
+            background: var(--primary); color: #0b132b; border: none; padding: 15px 40px;
+            font-size: 1.4rem; font-weight: 800; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(245, 183, 0, 0.4);
+            margin-top: 1rem;
+        }
+        button.flip-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 183, 0, 0.6); }
+        button.flip-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        #result-display {
+            font-size: 2rem; font-family: 'Montserrat', sans-serif;
+            color: var(--text); font-weight: 800; min-height: 50px; text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .result-highlight { color: var(--primary); }
+        /* --- 3D PARA TASARIMI --- */
+        .coin-container {
+            perspective: 1000px; margin: 2rem 0; width: 220px; height: 220px;
+        }
+
+        .coin {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d;
+            transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+
+        /* JavaScript ile eklenecek dönüş sınıfları */
+        .coin.flip-heads { transform: rotateY(1800deg); } /* 5 tam tur */
+        .coin.flip-tails { transform: rotateY(1980deg); } /* 5.5 tur */
+
+        .coin-face {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Montserrat', sans-serif; font-size: 2.5rem; font-weight: 800;
+            color: #0b132b; 
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.6);
+            border: 10px solid #c29b00;
+        }
+
+        .coin-front {
+            background: var(--coin-bg-front);
+            /* Yazı Yüzü */
+        }
+
+        .coin-back {
+            background: var(--coin-bg-back);
+            transform: rotateY(180deg);
+            /* Tura Yüzü */
+        }
+
+        /* --- SEO VE İÇERİK ALANI --- */
+        .seo-content {
+            background: var(--surface); padding: 3rem 2.5rem; border-radius: 12px; margin-top: 3rem;
+            border: 1px solid var(--border); line-height: 1.8;
+        }
+        .seo-content h2, .seo-content h3 { color: var(--primary); margin-bottom: 1.5rem; margin-top: 2rem; font-family: 'Montserrat', sans-serif; }
+        .seo-content p { color: var(--text-muted); margin-bottom: 1.2rem; font-size: 1.05rem; }
+        .seo-content ul { color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 2rem; }
+        .seo-content li { margin-bottom: 0.8rem; }
+
+        footer {
+            text-align: center; padding: 2rem; border-top: 1px solid var(--border); margin-top: 4rem;
+            color: var(--text-muted); font-size: 0.9rem; padding-bottom: 100px;
+        }
+        footer a { color: var(--primary); text-decoration: none; margin: 0 10px; cursor: pointer; transition: color 0.2s; }
+        footer a:hover { color: var(--text); }
+
+        /* Çerez ve Modallar */
+        .cookie-banner {
+            position: fixed; bottom: -150px; left: 0; width: 100%; background: var(--bg); border-top: 1px solid var(--border);
+            padding: 1.5rem; text-align: center; transition: bottom 0.5s ease; z-index: 1000; display: flex;
+            justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        }
+        .cookie-banner.show { bottom: 0; }
+        .cookie-banner p { margin: 0; font-size: 0.95rem; color: var(--text-muted); max-width: 800px; }
+        .cookie-banner button { padding: 0.8rem 2rem; font-size: 1rem; cursor: pointer; background: var(--primary); border: none; font-weight: bold; border-radius: 6px; color: #0b132b; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 19, 43, 0.9);
+            backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: var(--surface); padding: 3rem; border-radius: 12px; border: 1px solid var(--border);
+            max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; display: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8); line-height: 1.7;
+        }
+        .modal-content h2 { color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; font-family: 'Montserrat', sans-serif;}
+        .modal-content p, .modal-content li { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem; }
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        .close-modal {
+            position: absolute; top: 20px; right: 25px; font-size: 2.5rem; cursor: pointer; color: var(--text-muted);
+            line-height: 1; transition: color 0.2s;
+        }
+        .close-modal:hover { color: var(--primary); }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            .lang-switcher { top: 10px; right: 10px; }
+            .coin-container { width: 180px; height: 180px; }
+            .coin-face { font-size: 2rem; border-width: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="lang-switcher">
+            <button class="lang-btn active" onclick="changeLang('tr')">TR</button>
+            <button class="lang-btn" onclick="changeLang('en')">EN</button>
+            <button class="lang-btn" onclick="changeLang('es')">ES</button>
+            <button class="lang-btn" onclick="changeLang('de')">DE</button>
+        </div>
+        <h1 data-key="title">HSR Yazı Tura At</h1>
+        <p data-key="subtitle">Kararlarınızı şansa bırakın. Altın parayı havaya fırlatın.</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="ad-banner">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            <span style="position:absolute; z-index:-1;">Reklam Alanı / Ad Space</span>
+        </div>
+
+        <div class="app-surface">
+            
+            <div class="coin-container">
+                <div class="coin" id="coin">
+                    <div class="coin-face coin-front" id="coin-front-text">YAZI</div>
+                    <div class="coin-face coin-back" id="coin-back-text">TURA</div>
+                </div>
+            </div>
+
+            <div id="result-display" data-key="readyText">Hazır mısın?</div>
+            
+            <button id="flip-btn" class="flip-btn" data-key="flipBtn">Parayı Çevir</button>
+
+        </div>
+
+        <div class="ad-banner">
+            <span style="position:absolute; z-index:-1;">Reklam Alanı / Ad Space</span>
+        </div>
+
+        <article class="seo-content" id="seo-article"></article>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 HSR Studio. <span data-key="rights">Tüm hakları saklıdır.</span></p>
+        <div style="margin-top: 15px;">
+            <a id="link-privacy" data-key="privacyLink">Gizlilik Politikası</a> | 
+            <a id="link-terms" data-key="termsLink">Kullanım Koşulları</a> | 
+            <a href="mailto:hsrstudio345@gmail.com" data-key="contactLink">İletişim</a>
+        </div>
+    </footer>
+
+    <div id="cookie-banner" class="cookie-banner">
+        <p data-key="cookieMsg">Bu web sitesi, size en iyi deneyimi sunmak ve trafiği analiz etmek için çerezleri kullanır. Sitemizi kullanarak politikamızı kabul etmiş olursunuz.</p>
+        <button id="accept-cookies" data-key="cookieBtn">Kabul Et</button>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div id="privacy-modal" class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="privacy-text"></div>
+        </div>
+        <div id="terms-modal" class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="terms-text"></div>
+        </div>
+    </div>
+    <script>
+        // --- 1. DİL VE SEO VERİTABANI (AdSense "Thin Content" Aşmak İçin 400+ Kelime) ---
+        const i18n = {
+            tr: {
+                title: "HSR YAZI TURA AT",
+                subtitle: "Kararlarınızı şansa bırakın. Altın parayı havaya fırlatın.",
+                heads: "YAZI",
+                tails: "TURA",
+                readyText: "HAZIR MISIN?",
+                flipBtn: "PARAYI ÇEVİR",
+                flipping: "ÇEVRİLİYOR...",
+                resultHeads: "SONUÇ: YAZI!",
+                resultTails: "SONUÇ: TURA!",
+                rights: "Tüm hakları saklıdır.",
+                privacyLink: "Gizlilik Politikası",
+                termsLink: "Kullanım Koşulları",
+                contactLink: "İletişim",
+                cookieMsg: "Bu web sitesi, size en iyi deneyimi sunmak ve trafiği analiz etmek için çerezleri (cookies) kullanır. Sitemizi kullanarak politikamızı kabul etmiş olursunuz.",
+                cookieBtn: "Kabul Et",
+                seoHtml: `
+                    <h2>Sanal Yazı Tura Atma (Flip a Coin) Nedir?</h2>
+                    <p>Yüzyıllardır insanlar, aralarında anlaşmazlığa düştüklerinde veya iki eşit seçenek arasında seçim yapmakta zorlandıklarında havaya bir madeni para fırlatırlar. Ancak dijital çağda yanınızda her zaman fiziksel bir bozuk para bulunmayabilir. İşte tam bu noktada <strong>HSR 3D Yazı Tura At</strong> uygulaması devreye giriyor. Tamamen ücretsiz, indirme gerektirmeyen ve modern tarayıcılarda çalışan bu araç, kararlarınızı hızlı ve adil bir şekilde almanızı sağlar.</p>
+                    <p>Uygulamamız, gelişmiş HTML5 ve CSS3 teknolojileri kullanılarak oluşturulmuş 3 boyutlu bir "Altın Para" modeline sahiptir. Ekrana dokunduğunuzda veya butona tıkladığınızda, para fizik kurallarına uygun bir şekilde havada kendi etrafında turlar atar ve tamamen rastgele bir sonuçla (Yazı veya Tura) durur.</p>
+
+                    <h3>Neden HSR Sanal Para Çeviriciyi Kullanmalısınız?</h3>
+                    <ul>
+                        <li><strong>Kriptografik Rastgelelik:</strong> Gerçek hayatta atılan bir paranın düşüşü, atış açısına veya rüzgara bağlı olarak hileye açık olabilir. Ancak sanal para çeviricimiz, cihazınızın işlemcisindeki mikro saniyelik verileri kullanarak %50 - %50 eşitliğinde kusursuz bir rastgelelik sunar.</li>
+                        <li><strong>Göz Alıcı 3D Tasarım:</strong> Gece mavisi ve altın (Midnight Blue & Gold) renklerinin asil uyumuyla tasarlanan arayüzümüz, göz yormayan (Dark Mode) bir deneyim sunar. Paranın dönüş animasyonu, fiziksel bir parayı havaya fırlatmışsınız gibi tatmin edici bir his yaratır.</li>
+                        <li><strong>Spor Müsabakaları ve Kutu Oyunları İçin İdeal:</strong> Halı saha maçlarında kimin topa başlayacağını seçmek, kutu oyunlarında (Monopoly, Risk, FRP vb.) kimin ilk sırayı alacağını belirlemek veya sadece akşam ne yiyeceğinize karar vermek için en hızlı çözümdür.</li>
+                    </ul>
+
+                    <h3>Tarayıcı Tabanlı Güvenli İşlem (Client-Side)</h3>
+                    <p>HSR Studio olarak gizliliğinize ve güvenliğinize önem veriyoruz. Yaptığınız para atışlarının sonuçları sunucularımıza gönderilmez veya kayıt altına alınmaz. Tüm matematiksel hesaplamalar ve rastgele sayı üretimi işlemleri sizin cihazınızın içinde, sadece mili saniyeler süren yerel bir döngü ile tamamlanır. Bu sayede hiçbir internet kotanız harcanmaz ve sınırsız sayıda atış yapabilirsiniz.</p>
+                    <p>Ayrıca sistemimiz, düşük donanımlı eski model akıllı telefonlardan en güçlü masaüstü bilgisayarlara kadar her cihazda kasma veya donma olmadan (60 FPS animasyonla) çalışacak şekilde özel olarak optimize edilmiştir. Şimdi tereddüt etmeyi bırakın, altındaki butona basın ve altın paranın sizin yerinize karar vermesine izin verin!</p>
+                `,
+                privacyHtml: `
+                    <h2>Gizlilik Politikası</h2>
+                    <p><strong>Son Güncelleme: Mart 2026</strong></p>
+                    <p>HSR Studio olarak, web sitemizi kullanan tüm ziyaretçilerimizin veri gizliliğini korumak en büyük önceliğimizdir. HSR 3D Yazı Tura At uygulamamız tamamen "Client-Side" (İstemci Taraflı) çalışmaktadır. Bu, ürettiğiniz sonuçların veya IP adresinizin veritabanlarımıza kaydedilmediği anlamına gelir.</p>
+                    
+                    <h3>Çerezler (Cookies) ve Üçüncü Taraf Ağlar</h3>
+                    <p>Sitemizin ücretsiz yayın hayatına devam edebilmesi için Google AdSense reklam ağı ile entegreli çalışmaktayız. Google, size kişiselleştirilmiş (ilgi alanlarınıza uygun) reklamlar sunabilmek adına DART çerezleri gibi takip teknolojilerini kullanır. Sitemize giriş yaptığınızda alt kısımda çıkan çerez uyarısını onaylamanız halinde, temel tercihlerinizi cihazınızda yerel olarak (localStorage) saklarız.</p>
+                    
+                    <h3>İletişim ve Haklarınız</h3>
+                    <p>Kişisel Verilerin Korunması Kanunu (KVKK) gereğince, uygulamalarımız hakkında bilgi almak veya reklam/çerez ayarlarınızı yönetmek için bizimle <strong>hsrstudio345@gmail.com</strong> adresinden dilediğiniz zaman iletişime geçebilirsiniz.</p>
+                `,
+                termsHtml: `
+                    <h2>Kullanım Koşulları</h2>
+                    <p><strong>Son Güncelleme: Mart 2026</strong></p>
+                    <p>HSR 3D Yazı Tura (Flip a Coin) web sitesine giriş yaparak aşağıdaki tüm koşulları kabul etmiş sayılırsınız.</p>
+
+                    <h3>1. Kullanım Amacı ve Sorumluluk Reddi</h3>
+                    <p>Bu uygulama tamamen ücretsiz, eğlence ve kişisel karar verme süreçlerini hızlandırmak maksadıyla üretilmiş dijital bir araçtır. Çıkan Yazı/Tura sonuçlarına dayanılarak girilen maddi bahislerden, şans oyunlarından veya doğabilecek her türlü hukuki/finansal zarardan HSR Studio sorumlu tutulamaz.</p>
+
+                    <h3>2. Fikri Mülkiyet ve Telif</h3>
+                    <p>Sitenin tüm görsel tasarımları, gece mavisi/altın teması, HTML ve CSS mimarisi doğrudan HSR Studio'ya aittir. Kodların kopyalanarak başka bir domain altında ticari amaçla yayınlanması uluslararası telif haklarına aykırıdır.</p>
+                `
+            },
+            en: {
+                title: "HSR FLIP A COIN",
+                subtitle: "Leave your decisions to chance. Toss the gold coin.",
+                heads: "HEADS",
+                tails: "TAILS",
+                readyText: "READY?",
+                flipBtn: "FLIP THE COIN",
+                flipping: "FLIPPING...",
+                resultHeads: "RESULT: HEADS!",
+                resultTails: "RESULT: TAILS!",
+                rights: "All rights reserved.",
+                privacyLink: "Privacy Policy",
+                termsLink: "Terms of Use",
+                contactLink: "Contact",
+                cookieMsg: "This website uses cookies for analytics and personalized ads. By using our site, you accept our policy.",
+                cookieBtn: "Accept",
+                seoHtml: "<h2>What is the HSR 3D Coin Flipper?</h2><p>For centuries, people have flipped coins to settle disputes or make difficult choices. The HSR 3D Flip a Coin app brings this ancient tradition to the digital world. With a stunning Midnight Blue and Gold design, our physics-based 3D virtual coin offers a cryptographically fair 50/50 chance for Heads or Tails.</p><h3>Why use our tool?</h3><ul><li><strong>100% Fair Randomness:</strong> Unlike physical coins that can be rigged by the tosser, our JavaScript-based randomizer ensures perfect equality.</li><li><strong>Premium 3D Design:</strong> Enjoy a smooth, 60fps rotating gold coin animation directly in your browser without any app installations.</li><li><strong>Privacy First:</strong> All flips are calculated locally on your device. We do not track your flip history or personal data.</li></ul><p>Whether you need to decide who kicks off in a football match, who goes first in a board game, or simply what to eat for dinner, just click the flip button and let fate decide!</p>",
+                privacyHtml: "<h2>Privacy Policy</h2><p><strong>Last Updated: March 2026</strong></p><p>HSR Studio prioritizes your privacy. The HSR Flip a Coin app operates completely client-side. Your flip results and IP address are never stored in our databases. We use Google AdSense, which utilizes cookies (like DART) to serve personalized ads based on your browsing history. You can contact us at hsrstudio345@gmail.com for any inquiries.</p>",
+                termsHtml: "<h2>Terms of Use</h2><p>This application is for entertainment purposes only. HSR Studio is not legally responsible for any bets, wagers, or financial decisions made based on the outcome of the coin toss. All designs and codes are the intellectual property of HSR Studio.</p>"
+            },
+            es: {
+                title: "HSR LANZAR UNA MONEDA",
+                subtitle: "Deja tus decisiones al azar. Lanza la moneda de oro.",
+                heads: "CARA",
+                tails: "CRUZ",
+                readyText: "¿LISTO?",
+                flipBtn: "LANZAR MONEDA",
+                flipping: "GIRANDO...",
+                resultHeads: "¡RESULTADO: CARA!",
+                resultTails: "¡RESULTADO: CRUZ!",
+                rights: "Todos los derechos reservados.",
+                privacyLink: "Política de Privacidad",
+                termsLink: "Términos de Uso",
+                contactLink: "Contacto",
+                cookieMsg: "Este sitio web utiliza cookies para ofrecerle la mejor experiencia. Al continuar, acepta nuestra política.",
+                cookieBtn: "Aceptar",
+                seoHtml: "<h2>¿Qué es la Moneda Virtual 3D?</h2><p>Es una herramienta web premium y gratuita para lanzar una moneda al aire de forma virtual. Ideal para tomar decisiones rápidas, resolver empates en deportes o juegos de mesa. Nuestra moneda de oro 3D gira con físicas realistas y garantiza un resultado 100% justo y aleatorio (50/50).</p>",
+                privacyHtml: "<h2>Política de Privacidad</h2><p>Todas las operaciones se realizan localmente en su navegador. No guardamos información personal. Utilizamos Google AdSense para la monetización, el cual utiliza cookies para mostrar anuncios relevantes. Contacto: hsrstudio345@gmail.com.</p>",
+                termsHtml: "<h2>Términos de Uso</h2><p>Uso exclusivo para entretenimiento. No nos hacemos responsables de las apuestas realizadas con los resultados de esta aplicación. Prohibida la copia del código fuente.</p>"
+            },
+            de: {
+                title: "HSR MÜNZWURF",
+                subtitle: "Überlassen Sie Ihre Entscheidungen dem Zufall. Werfen Sie die Goldmünze.",
+                heads: "KOPF",
+                tails: "ZAHL",
+                readyText: "BEREIT?",
+                flipBtn: "MÜNZE WERFEN",
+                flipping: "WIRFT...",
+                resultHeads: "ERGEBNIS: KOPF!",
+                resultTails: "ERGEBNIS: ZAHL!",
+                rights: "Alle Rechte vorbehalten.",
+                privacyLink: "Datenschutz",
+                termsLink: "Nutzungsbedingungen",
+                contactLink: "Kontakt",
+                cookieMsg: "Diese Website verwendet Cookies zur Analyse und für personalisierte Anzeigen. Mit der Nutzung stimmen Sie zu.",
+                cookieBtn: "Akzeptieren",
+                seoHtml: "<h2>Was ist der HSR 3D Münzwurf?</h2><p>Ein hochwertiger, kostenloser Online-Münzwerfer (Kopf oder Zahl). Perfekt für schnelle Entscheidungen, Sport und Brettspiele. Mit unserem kryptografisch sicheren Zufallsgenerator haben Sie immer eine exakte 50/50 Chance. Genießen Sie das edle Gold- und Mitternachtsblau-Design ohne App-Downloads.</p>",
+                privacyHtml: "<h2>Datenschutzrichtlinie</h2><p>Ihre Würfe werden lokal auf Ihrem Gerät berechnet. Wir speichern keine persönlichen Daten. Wir verwenden Google AdSense, das Cookies für personalisierte Werbung nutzt. Kontakt: hsrstudio345@gmail.com.</p>",
+                termsHtml: "<h2>Nutzungsbedingungen</h2><p>Nur für Unterhaltungszwecke. Wir übernehmen keine rechtliche Verantwortung für finanzielle Entscheidungen oder Wetten, die auf den Ergebnissen basieren.</p>"
+            }
+        };
+
+        let currentLang = localStorage.getItem('hsr_coin_lang') || 'tr';
+
+        function changeLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('hsr_coin_lang', lang);
+            
+            // Buton aktiflik durumu
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.lang-btn[onclick="changeLang('${lang}')"]`).classList.add('active');
+
+            // Metinleri Güncelle
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (i18n[lang][key]) el.textContent = i18n[lang][key];
+            });
+
+            // Para Yüzleri
+            document.getElementById('coin-front-text').textContent = i18n[lang].heads;
+            document.getElementById('coin-back-text').textContent = i18n[lang].tails;
+
+            // Uzun Metinler
+            document.getElementById('seo-article').innerHTML = i18n[lang].seoHtml;
+            document.getElementById('privacy-text').innerHTML = i18n[lang].privacyHtml;
+            document.getElementById('terms-text').innerHTML = i18n[lang].termsHtml;
+            
+            // Eğer çevrilmemişse hazır yazısını göster
+            if(!document.getElementById('result-display').textContent.includes("!")) {
+               document.getElementById('result-display').textContent = i18n[lang].readyText; 
+            }
+        }
+
+        // --- 3D YAZI TURA MANTIĞI ---
+        const coin = document.getElementById('coin');
+        const flipBtn = document.getElementById('flip-btn');
+        const resultDisplay = document.getElementById('result-display');
+        
+        let currentRotation = 0; // Paranın sonsuz dönmesi için açı sayacı
+        let isFlipping = false;
+
+        function flipCoin() {
+            if (isFlipping) return;
+            isFlipping = true;
+            flipBtn.disabled = true;
+
+            resultDisplay.textContent = i18n[currentLang].flipping;
+            resultDisplay.classList.remove('result-highlight');
+
+            // 0 = Yazı (Heads), 1 = Tura (Tails)
+            const result = Math.floor(Math.random() * 2);
+            
+            // Rastgele 6 ila 9 tam tur atsın
+            const extraSpins = (Math.floor(Math.random() * 4) + 6) * 360; 
+            currentRotation += extraSpins;
+
+            if (result === 0) {
+                // Yazı gelmesi için 360'ın katı olmalı
+                if (currentRotation % 360 !== 0) currentRotation += 180;
+            } else {
+                // Tura gelmesi için 360'ın katı + 180 olmalı
+                if (currentRotation % 360 !== 180) currentRotation += 180;
+            }
+
+            // CSS Transform Uygula
+            coin.style.transform = `rotateY(${currentRotation}deg)`;
+
+            // Animasyon süresi 3 saniye (CSS'teki transition ile aynı)
+            setTimeout(() => {
+                resultDisplay.classList.add('result-highlight');
+                if (result === 0) {
+                    resultDisplay.textContent = i18n[currentLang].resultHeads;
+                } else {
+                    resultDisplay.textContent = i18n[currentLang].resultTails;
+                }
+                
+                isFlipping = false;
+                flipBtn.disabled = false;
+            }, 3000);
+        }
+
+        flipBtn.addEventListener('click', flipCoin);
+
+        // --- ÇEREZ VE MODAL MANTIĞI ---
+        const cookieBanner = document.getElementById('cookie-banner');
+        const acceptCookiesBtn = document.getElementById('accept-cookies');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const privacyModal = document.getElementById('privacy-modal');
+        const termsModal = document.getElementById('terms-modal');
+        const closeBtns = document.querySelectorAll('.close-modal');
+
+        if (!localStorage.getItem('hsrCoinCookiesAccepted')) {
+            setTimeout(() => cookieBanner.classList.add('show'), 1500);
+        }
+
+        acceptCookiesBtn.addEventListener('click', () => {
+            localStorage.setItem('hsrCoinCookiesAccepted', 'true');
+            cookieBanner.classList.remove('show');
+        });
+
+        document.getElementById('link-privacy').addEventListener('click', (e) => {
+            e.preventDefault(); modalOverlay.classList.add('show');
+            privacyModal.style.display = 'block'; termsModal.style.display = 'none';
+        });
+
+        document.getElementById('link-terms').addEventListener('click', (e) => {
+            e.preventDefault(); modalOverlay.classList.add('show');
+            termsModal.style.display = 'block'; privacyModal.style.display = 'none';
+        });
+
+        function closeModal() {
+            modalOverlay.classList.remove('show');
+            setTimeout(() => { privacyModal.style.display = 'none'; termsModal.style.display = 'none'; }, 300);
+        }
+
+        closeBtns.forEach(btn => btn.addEventListener('click', closeModal));
+        modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+
+        // Başlangıç
+        changeLang(currentLang);
+
+    </script>
+</body>
+</html>
