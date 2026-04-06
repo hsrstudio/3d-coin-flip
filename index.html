@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="tr" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HSR 3D Sanal Yazı Tura Atma aracı. Kararlarınızı şansa bırakın, olasılık analizlerini inceleyin ve geçmiş atış istatistiklerinizi tutun.">
+    <meta name="keywords" content="yazı tura, sanal para çevirme, flip a coin, olasılık hesaplama, 3d yazı tura, hsr studio, karar verme aracı">
+    <meta name="author" content="HSR Studio">
+    <meta name="robots" content="index, follow">
+
+    <title>HSR 3D Yazı Tura - Olasılık ve Karar Verme Portalı</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+    
+    <meta name="google-adsense-account" content="ca-pub-1011994651264318">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1011994651264318" crossorigin="anonymous"></script>
+
+    <style>
+        /* ==========================================
+           1. GECE MAVİSİ VE ALTIN TEMA DEĞİŞKENLERİ
+           ========================================== */
+        :root {
+            --bg: #0b132b; 
+            --surface: #1c2541; 
+            --primary: #f5b700; 
+            --primary-hover: #d49f00; 
+            --text: #e0e1dd; 
+            --text-muted: #8d99ae;
+            --border: #3a506b;
+            --coin-bg-front: linear-gradient(45deg, #f5b700, #ffea00);
+            --coin-bg-back: linear-gradient(45deg, #d49f00, #f5b700);
+            --success: #2ecc71;
+            --danger: #e74c3c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1c2541 0%, transparent 70%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* ==========================================
+           2. HEADER VE DİL SEÇİCİ
+           ========================================== */
+        .lang-switcher {
+            position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100;
+        }
+        .lang-btn {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif; font-size: 0.85rem;
+        }
+        .lang-btn.active, .lang-btn:hover { background: var(--primary); color: #0b132b; border-color: var(--primary); }
+
+        header { text-align: center; padding: 4rem 1rem 2rem; border-bottom: 1px solid var(--border); position: relative; }
+        h1 {
+            font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 2.8rem;
+            margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 4px 15px rgba(245, 183, 0, 0.3);
+        }
+        header p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
+
+        /* ==========================================
+           3. ANA UYGULAMA ALANI VE GEÇMİŞ PANELİ (DWELL TIME HİLESİ)
+           ========================================== */
+        .app-layout {
+            display: grid; grid-template-columns: 1fr 350px; gap: 2rem; margin-bottom: 3rem;
+        }
+
+        .app-surface {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 3rem 2rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 450px; position: relative;
+        }
+
+        .history-panel {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 2rem; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .history-panel h3 { color: var(--primary); font-family: 'Montserrat', sans-serif; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; text-transform: uppercase; font-size: 1.1rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+        .stat-box { background: var(--bg); padding: 15px 10px; text-align: center; border-radius: 8px; border: 1px solid var(--border); }
+        .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--primary); font-family: 'Montserrat', sans-serif; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+
+        .history-list { list-style: none; overflow-y: auto; max-height: 250px; padding-right: 5px; flex: 1; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(58, 80, 107, 0.5); font-size: 0.9rem; animation: fadeIn 0.5s ease; }
+        .history-item.heads { border-left: 4px solid var(--primary); }
+        .history-item.tails { border-left: 4px solid var(--text); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        /* ==========================================
+           4. 3D PARA VE ETKİLEŞİM BUTONLARI
+           ========================================== */
+        button.flip-btn {
+            background: var(--primary); color: #0b132b; border: none; padding: 18px 45px;
+            font-size: 1.3rem; font-weight: 800; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(245, 183, 0, 0.4); margin-top: 1.5rem; width: 100%; max-width: 300px;
+        }
+        button.flip-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 183, 0, 0.6); }
+        button.flip-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        #result-display { font-size: 2.2rem; font-family: 'Montserrat', sans-serif; color: var(--text); font-weight: 800; min-height: 60px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; }
+        .result-highlight { color: var(--primary); animation: popIn 0.5s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .coin-container { perspective: 1000px; margin: 1rem 0 2rem 0; width: 200px; height: 200px; }
+        .coin { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+        
+        .coin-face {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center; text-align: center;
+            font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 800; color: #0b132b; 
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.6); border: 10px solid #c29b00;
+        }
+        .coin-front { background: var(--coin-bg-front); }
+        .coin-back { background: var(--coin-bg-back); transform: rotateY(180deg); }
+
+        /* ==========================================
+           5. SEO İÇERİK ALANI, FOOTER VE ÇEREZ BARI
+           ========================================== */
+        .seo-content { background: var(--surface); padding: 3rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.8; margin-bottom: 2rem; }
+        .seo-content h2, .seo-content h3 { color: var(--primary); margin-bottom: 1.5rem; margin-top: 2rem; font-family: 'Montserrat', sans-serif; }
+        .seo-content p { color: var(--text-muted); margin-bottom: 1.2rem; font-size: 1.05rem; text-align: justify; }
+
+        footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); margin-top: 2rem; background: var(--surface); color: var(--text-muted); font-size: 0.95rem; }
+        footer a { color: var(--primary); text-decoration: none; margin: 0 10px; cursor: pointer; transition: color 0.2s; font-weight: bold; }
+        footer a:hover { color: var(--text); }
+
+        .cookie-banner {
+            position: fixed; bottom: -150px; left: 0; width: 100%; background: #070d1f; border-top: 2px solid var(--primary);
+            padding: 1.5rem; text-align: center; transition: bottom 0.5s ease; z-index: 1000; display: flex;
+            justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.9);
+        }
+        .cookie-banner.show { bottom: 0; }
+        .cookie-banner p { margin: 0; font-size: 0.95rem; color: var(--text); max-width: 800px; }
+        .cookie-banner button { padding: 0.8rem 2.5rem; font-size: 1rem; cursor: pointer; background: var(--primary); border: none; font-weight: bold; border-radius: 6px; color: #0b132b; text-transform: uppercase; }
+
+        /* ==========================================
+           6. ULTIMATE HUKUK VE GİZLİLİK PANELİ (YENİ!)
+           ========================================== */
+        .ultimate-modal {
+            position: fixed; inset: 0; background: rgba(7, 13, 27, 0.95);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 3000; display: none; align-items: center; justify-content: center;
+            padding: 20px; animation: modalFadeIn 0.4s ease;
+        }
+        .ultimate-modal.active { display: flex; }
+        
+        .ultimate-content {
+            background: var(--surface); border: 1px solid var(--primary);
+            width: 100%; max-width: 850px; max-height: 85vh; border-radius: 20px;
+            padding: 35px; overflow-y: auto; position: relative;
+            box-shadow: 0 0 50px rgba(245, 183, 0, 0.2);
+        }
+        .ultimate-content h2 { 
+            color: var(--primary); font-family: 'Montserrat', sans-serif; font-size: 1.8rem;
+            margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; text-transform: uppercase;
+        }
+        .ultimate-content .modal-body { 
+            font-size: 1rem; line-height: 1.8; color: var(--text-muted); text-align: justify;
+        }
+        .close-ultimate {
+            display: block; width: 100%; margin-top: 30px; padding: 18px;
+            background: var(--primary); color: #0b132b; border: none;
+            border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .close-ultimate:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245, 183, 0, 0.4); }
+
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        @media (max-width: 900px) {
+            .app-layout { grid-template-columns: 1fr; }
+            h1 { font-size: 2.2rem; }
+            .seo-content { padding: 2rem 1.5rem; }
+            .ultimate-content { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher">
+        <button class="lang-btn active" id="btn-tr" onclick="changeLang('tr')">TR</button>
+        <button class="lang-btn" id="btn-en" onclick="changeLang('en')">EN</button>
+        <button class="lang-btn" id="btn-de" onclick="changeLang('de')">DE</button>
+        <button class="lang-btn" id="btn-es" onclick="changeLang('es')">ES</button>
+    </div>
+
+    <header>
+        <h1 id="site-title">HSR 3D YAZI TURA</h1>
+        <p id="site-desc">Gelişmiş Olasılık Simülatörü ve Karar Verme Portalı</p>
+    </header>
+
+    <div class="container">
+        <div style="width: 100%; min-height: 90px; border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 2rem; display: flex; justify-content: center; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 0.8rem; letter-spacing: 1px;">[ ADSENSE OPTİMİZE REKLAM ALANI ]</span>
+        </div>
+
+        <div class="app-layout">
+            
+            <div class="app-surface">
+                <div class="coin-container">
+                    <div class="coin" id="coin">
+                        <div class="coin-face coin-front" id="coin-front-text">YAZI</div>
+                        <div class="coin-face coin-back" id="coin-back-text">TURA</div>
+                    </div>
+                </div>
+                <div id="result-display">...</div>
+                <button class="flip-btn" id="flip-btn">SİMÜLASYONU BAŞLAT</button>
+            </div>
+
+            <div class="history-panel">
+                <h3 id="history-title">Atış Analizi & İstatistikler</h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-num" id="count-heads">0</div>
+                        <div class="stat-label" id="label-heads">Yazı</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="count-tails">0</div>
+                        <div class="stat-label" id="label-tails">Tura</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; font-weight: bold;" id="label-history">Son Atışlar:</div>
+                <ul class="history-list" id="history-list">
+                    </ul>
+            </div>
+        </div>
+
+        <div style="width: 100%; min-height: 90px; border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 2rem; display: flex; justify-content: center; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 0.8rem; letter-spacing: 1px;">[ ADSENSE OPTİMİZE REKLAM ALANI ]</span>
+        </div>
+
+        <article class="seo-content" id="seo-content-container">
+            </article>
+
+    </div>
+
+    <footer>
+        <div style="margin-bottom: 20px;">
+            <a id="link-privacy" onclick="openUltimateModal('privacy')">Gizlilik Politikası</a> | 
+            <a id="link-terms" onclick="openUltimateModal('terms')">Kullanım Şartları</a> | 
+            <a id="link-about" onclick="openUltimateModal('about')">Hakkımızda</a>
+        </div>
+        <div style="font-size: 0.85rem;">&copy; 2026 HSR Studio. Tüm Hakları Saklıdır.</div>
+        <div style="margin-top: 15px; font-weight: 800; color: var(--primary); letter-spacing: 1px; font-family: 'Montserrat';">İLETİŞİM: hsrstudio345@gmail.com</div>
+    </footer>
+
+    <div class="cookie-banner" id="cookie-banner">
+        <p id="cookie-text">Platformumuz, olasılık istatistiklerinizi yerel cihazınızda kaydetmek ve size en uygun Google AdSense reklamlarını sunabilmek için çerezleri (cookies) kullanır. Sistemi kullanarak veri politikalarımızı kabul etmiş olursunuz.</p>
+        <button id="accept-cookies">KABUL EDİYORUM</button>
+    </div>
+
+    <div id="ultimate-modal" class="ultimate-modal">
+        <div class="ultimate-content">
+            <h2 id="ultimate-modal-title">Başlık</h2>
+            <div class="modal-body" id="ultimate-modal-body">
+                İçerik yükleniyor...
+            </div>
+            <button class="close-ultimate" onclick="closeUltimateModal()" id="ultimate-close-btn">Kapat ve Sisteme Dön</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 8. ÇOK DİLLİ SEO, İÇERİK VE ULTIMATE HUKUK SÖZLÜĞÜ (TR & EN)
+        // ==========================================
+        const siteData = {
+            tr: {
+                title: "HSR 3D YAZI TURA",
+                desc: "Gelişmiş Olasılık Simülatörü ve Karar Verme Portalı",
+                flipBtn: "SİMÜLASYONU BAŞLAT",
+                flipBtnWait: "SİMÜLE EDİLİYOR...",
+                historyTitle: "Atış Analizi & İstatistikler",
+                labelHeads: "Yazı",
+                labelTails: "Tura",
+                labelHistory: "Son Atışlar:",
+                heads: "YAZI",
+                tails: "TURA",
+                cookieText: "Platformumuz, olasılık istatistiklerinizi yerel cihazınızda kaydetmek ve size en uygun Google AdSense reklamlarını sunabilmek için çerezleri (cookies) ve GDPR standartlarını kullanır. Sistemi kullanarak veri politikalarımızı kabul etmiş olursunuz.",
+                cookieBtn: "KABUL EDİYORUM",
+                closeBtn: "KAPAT VE SİSTEME DÖN",
+                footerPrivacy: "Gizlilik Politikası",
+                footerTerms: "Kullanım Şartları",
+                footerAbout: "Hakkımızda",
+                seoContent: `
+                    <h2>Sanal Yazı Tura ve Olasılık Bilimi: Karar Vermenin Matematiksel Anatomisi</h2>
+                    <p>İnsanlık tarihi boyunca zor kararlar vermek, adil bir seçim yapmak veya bir anlaşmazlığı çözmek için başvurulan en eski ve en güvenilir yöntemlerden biri yazı tura (para atma) işlemidir. Tarihi milattan önce 7. yüzyıla, parayı icat eden Lidyalılara kadar uzanan bu basit ama etkili eylem, bugün HSR Studio'nun geliştirdiği <strong>HSR 3D Sanal Yazı Tura Simülatörü</strong> ile dijital dünyanın en gelişmiş ve adil karar verme aracı haline gelmiştir. Geleneksel madeni paraların fiziksel kusurları (aşınma, ağırlık merkezi kaymaları veya hava direnci) nedeniyle tam olarak %50-%50 (yüzde elli) sonuç vermediği bilimsel olarak kanıtlanmıştır. Ancak platformumuzda yer alan algoritmik sistem, cihazınızın işlemcisindeki kriptografik (şifreleme tabanlı) rastgele sayı üreticilerini (PRNG) kullanarak fiziksel dünyanın kusurlarından arındırılmış, mutlak surette adil ve eşitsizliği ortadan kaldıran bir yazı tura deneyimi sunar.</p>
+                    
+                    <h3>Olasılık Teorisi, Kriptografik Rastgelelik ve Kullanım Alanları</h3>
+                    <p>Olasılık teorisinde, adil bir madeni paranın atılması 'Bernoulli denemesi' olarak adlandırılır. Atılan bir paranın 'Yazı' veya 'Tura' gelme ihtimali teorik olarak eşittir ve 1/2'dir. Geleneksel uygulamalarda bu rastgelelik rüzgarın şiddeti ve paranın hangi yüzünün üstte olduğu gibi fiziksel dış etkenlere bağlıyken; <strong>HSR 3D Karar Verme Portalı</strong>, bilgisayar bilimlerinin sunduğu saf matematiksel rastgeleliği kullanır. Sistem, siz "Simülasyonu Başlat" butonuna bastığınız anda saniyenin milyonda biri hızında binlerce farklı sayısal algoritmayı tarar ve sonucu kesin bir rastgelelikle belirler.</p>
+                `,
+                modalPrivacyTitle: "GİZLİLİK VE VERİ İŞLEME POLİTİKASI",
+                modalPrivacyText: `
+                    <p>HSR Studio olarak, kullanıcılarımızın veri gizliliği, siber güvenliği ve dijital hakları bizim en temel önceliğimizdir. Bu platformda uygulanan çerez (cookie) yönetimi, kullanıcı onayı ve veri işleme politikaları; Avrupa Birliği Genel Veri Koruma Tüzüğü (GDPR), Kaliforniya Tüketici Gizliliği Yasası (CCPA) ve Türkiye Cumhuriyeti Kişisel Verilerin Korunması Kanunu (KVKK) başta olmak üzere tüm uluslararası veri koruma kanunlarına mutlak surette entegre edilmiştir.</p>
+                    <p><strong>Veri Depolama:</strong> Uygulamamız üzerinden gerçekleştirdiğiniz atış analizleri ve istatistiksel sonuçlar, hiçbir koşulda merkezi sunucularımızda depolanmaz, üçüncü şahıs veri tüccarlarına satılmaz veya profilleme amacıyla kullanılamaz. Tüm geçmiş atış verileriniz, uçtan uca şifreleme prensipleri doğrultusunda sadece kendi cihazınızın yerel hafızasında (Local Storage) tutulur.</p>
+                    <p><strong>Google AdSense Entegrasyonu:</strong> Sistemimizin kesintisiz ve ücretsiz hizmet verebilmesi için dünyanın en güvenilir reklam ağı olan Google AdSense ile çalışmaktayız. Sitemizdeki zorunlu çerezler, yalnızca AdSense altyapısı aracılığıyla ilgi alanlarınıza en uygun, kullanıcı deneyimini bozmayan reklamların gösterilmesi amacıyla kullanılmaktadır.</p>
+                `,
+                modalTermsTitle: "KULLANIM ŞARTLARI VE LİSANS SÖZLEŞMESİ",
+                modalTermsText: `
+                    <p>HSR 3D Yazı Tura platformu, tamamen eğitsel, istatistiksel analiz ve pratik karar verme amacıyla tasarlanmıştır. Bu sistemi kullanarak aşağıdaki tüm şartları kayıtsız şartsız kabul etmiş sayılırsınız.</p>
+                    <p><strong>Yasal Uyarı ve Bahis Karşıtı Politika:</strong> Sistemimiz, Google AdSense politikaları ve uluslararası hukuk kuralları çerçevesinde hiçbir şekilde <strong>bahis, kumar, yasa dışı çekiliş, piyango veya oranlı oyunları desteklemez</strong> ve bu tür sitelere yönlendirme yapmaz. AdSense ağının sağladığı resmi reklamlar dışında platformda hiçbir finansal işlem veya para transferi yapılamaz.</p>
+                    <p>Platformumuz saf, objektif, algoritmik ve matematiksel sonuçlar üretir. Ancak bu sonuçların gerçek hayattaki hukuki veya finansal kararlarda bağlayıcılığı yoktur; sistem sadece bir simülasyon aracıdır.</p>
+                `,
+                modalAboutTitle: "HSR STUDIO HAKKINDA VE İLETİŞİM",
+                modalAboutText: `
+                    <p>HSR Studio, modern çağın analitik ihtiyaçlarını karşılamak üzere yenilikçi, şeffaf ve yüksek güvenlikli dijital araçlar geliştiren, teknoloji odaklı bir yazılım geliştirme merkezidir. Temel amacımız, günlük hayatı kolaylaştıran, olasılık bilimini dijitalleştiren ve kullanıcılara kusursuz arayüzler (UI/UX) sunan platformlar inşa etmektir.</p>
+                    <p>Geliştirdiğimiz bu 3D Yazı Tura ve Olasılık Simülatörü, karar verme süreçlerinizi güvenli bir algoritmaya emanet etmeniz için tasarlanmıştır. Sistemimiz, cihaz işlemcilerini kullanarak en adil sonucu üretmeyi garanti eder.</p>
+                    <p>Sistemimiz hakkında geri bildirimde bulunmak, reklam ve sponsorluk süreçlerini yönetmek veya herhangi bir şikayet/talep bildirmek için 7 gün 24 saat aktif olan resmi iletişim hattımız üzerinden uzman ekibimize ulaşabilirsiniz.</p>
+                    <p style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-top: 20px;">Kurumsal İletişim: hsrstudio345@gmail.com</p>
+                `
+            },
+            en: {
+                title: "HSR 3D COIN FLIP",
+                desc: "Advanced Probability Simulator & Decision Portal",
+                flipBtn: "START SIMULATION",
+                flipBtnWait: "SIMULATING...",
+                historyTitle: "Flip Analysis & Statistics",
+                labelHeads: "Heads",
+                labelTails: "Tails",
+                labelHistory: "Recent Flips:",
+                heads: "HEADS",
+                tails: "TAILS",
+                cookieText: "Our platform uses cookies and GDPR standards to save your probability statistics locally and to provide you with relevant Google AdSense advertisements. By using the system, you accept our data policies.",
+                cookieBtn: "I ACCEPT",
+                closeBtn: "CLOSE AND RETURN",
+                footerPrivacy: "Privacy Policy",
+                footerTerms: "Terms of Use",
+                footerAbout: "About Us",
+                seoContent: `
+                    <h2>Virtual Coin Flipping and Probability Science: The Mathematical Anatomy of Decision Making</h2>
+                    <p>Throughout human history, flipping a coin has been one of the oldest and most reliable methods used to make difficult decisions or resolve a dispute. Dating back to the 7th century BC to the Lydians who invented money, this simple but effective action has become the most advanced and fair decision-making tool of the digital world today with the <strong>HSR 3D Virtual Coin Flip Simulator</strong>. It is scientifically proven that traditional physical coins do not yield exactly a 50%-50% result due to physical flaws. However, the algorithmic system in our platform uses cryptographic pseudo-random number generators (PRNG) to offer a completely fair coin flip experience.</p>
+                    
+                    <h3>Probability Theory, Cryptographic Randomness</h3>
+                    <p>In probability theory, flipping a fair coin is called a 'Bernoulli trial'. The probability of landing on 'Heads' or 'Tails' is theoretically 1/2. While traditional applications depend on external physical factors; the <strong>HSR 3D Portal</strong> utilizes pure mathematical randomness. The moment you press the button, the system scans thousands of numerical algorithms and determines the result with absolute randomness.</p>
+                `,
+                modalPrivacyTitle: "PRIVACY AND DATA PROCESSING POLICY",
+                modalPrivacyText: `
+                    <p>At HSR Studio, the data privacy, cybersecurity, and digital rights of our users are our fundamental priorities. The cookie management and data processing policies implemented on this platform are integrated with international data protection laws, including GDPR and CCPA.</p>
+                    <p><strong>Data Storage:</strong> The flip analyses and statistical results you perform are never stored on our central servers, sold to third parties, or used for profiling. All your historical flip data is kept solely in the local memory (Local Storage) of your own device.</p>
+                    <p><strong>Google AdSense Integration:</strong> To provide uninterrupted and free service, we work with Google AdSense, the world's most trusted advertising network. Mandatory cookies are used to display non-intrusive advertisements suited to your interests.</p>
+                `,
+                modalTermsTitle: "TERMS OF USE AND LICENSE AGREEMENT",
+                modalTermsText: `
+                    <p>The HSR 3D Coin Flip platform is designed purely for educational, statistical analysis, and practical decision-making purposes. By using this system, you unconditionally accept all the following terms.</p>
+                    <p><strong>Legal Disclaimer and Anti-Gambling Policy:</strong> Within the framework of Google AdSense policies and international laws, our system <strong>does not support betting, gambling, illegal lotteries, or games of chance</strong> in any way, nor does it redirect to such sites. No financial transactions can be made on the platform.</p>
+                    <p>Our platform produces pure algorithmic results. However, these results have no binding legal or financial force in real life; the system is solely a simulation tool.</p>
+                `,
+                modalAboutTitle: "ABOUT HSR STUDIO AND CONTACT",
+                modalAboutText: `
+                    <p>HSR Studio is a technology-focused software development center that builds innovative, transparent, and highly secure digital tools to meet modern analytical needs. Our primary goal is to build platforms that simplify daily life, digitize probability science, and offer flawless interfaces.</p>
+                    <p>This 3D Coin Flip and Probability Simulator is designed for you to entrust your decision-making processes to a secure algorithm.</p>
+                    <p>To provide feedback, manage advertising and sponsorship processes, or report any requests, you can reach our expert team 24/7 through our official communication line.</p>
+                    <p style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-top: 20px;">Corporate Contact: hsrstudio345@gmail.com</p>
+                `
+            },
+            de: {
+                title: "HSR 3D MÜNZWURF",
+                desc: "Erweiterter Wahrscheinlichkeitssimulator & Entscheidungsportal",
+                flipBtn: "SIMULATION STARTEN",
+                flipBtnWait: "SIMULIERT...",
+                historyTitle: "Wurfanalyse & Statistiken",
+                labelHeads: "Kopf",
+                labelTails: "Zahl",
+                labelHistory: "Letzte Würfe:",
+                heads: "KOPF",
+                tails: "ZAHL",
+                cookieText: "Unsere Plattform verwendet Cookies und DSGVO-Standards, um Ihre Wahrscheinlichkeitsstatistiken auf Ihrem lokalen Gerät zu speichern und Ihnen relevante Google AdSense-Anzeigen bereitzustellen. Mit der Nutzung des Systems akzeptieren Sie unsere Datenrichtlinien.",
+                cookieBtn: "ICH AKZEPTIERE",
+                closeBtn: "SCHLIEßEN UND ZURÜCK",
+                footerPrivacy: "Datenschutz",
+                footerTerms: "Nutzungsbedingungen",
+                footerAbout: "Über uns",
+                seoContent: `
+                    <h2>Virtueller Münzwurf und die Wissenschaft der Wahrscheinlichkeit: Die mathematische Anatomie der Entscheidungsfindung</h2>
+                    <p>Im Laufe der Menschheitsgeschichte war das Werfen einer Münze eine der ältesten und zuverlässigsten Methoden, um schwierige Entscheidungen zu treffen oder einen Streit beizulegen. Diese einfache, aber effektive Handlung, deren Geschichte bis ins 7. Jahrhundert v. Chr. zu den Lydern, den Erfindern des Geldes, zurückreicht, ist heute mit dem <strong>HSR 3D Virtual Coin Flip Simulator</strong> zum fortschrittlichsten Entscheidungswerkzeug der digitalen Welt geworden. Es ist wissenschaftlich erwiesen, dass herkömmliche physische Münzen aufgrund physikalischer Mängel nicht genau ein Ergebnis von 50%-50% liefern. Das in unsere Plattform integrierte algorithmische System nutzt jedoch kryptografische Pseudozufallszahlengeneratoren (PRNG), um ein absolut faires Münzwurferlebnis zu bieten.</p>
+                    
+                    <h3>Wahrscheinlichkeitstheorie und kryptografische Zufälligkeit</h3>
+                    <p>In der Wahrscheinlichkeitstheorie wird das Werfen einer fairen Münze als 'Bernoulli-Experiment' bezeichnet. Die Wahrscheinlichkeit, auf 'Kopf' oder 'Zahl' zu landen, beträgt theoretisch 1/2. Während traditionelle Anwendungen von externen physikalischen Faktoren abhängen, nutzt das <strong>HSR 3D Portal</strong> die rein mathematische Zufälligkeit. In dem Moment, in dem Sie auf die Schaltfläche klicken, durchsucht das System Tausende numerischer Algorithmen und bestimmt das Ergebnis mit absoluter Zufälligkeit.</p>
+                `,
+                modalPrivacyTitle: "DATENSCHUTZ- UND DATENVERARBEITUNGSRICHTLINIE",
+                modalPrivacyText: `
+                    <p>Bei HSR Studio haben der Datenschutz, die Cybersicherheit und die digitalen Rechte unserer Nutzer höchste Priorität. Die auf dieser Plattform implementierten Cookie-Verwaltungs- und Datenverarbeitungsrichtlinien entsprechen den internationalen Datenschutzgesetzen, einschließlich DSGVO und CCPA.</p>
+                    <p><strong>Datenspeicherung:</strong> Die von Ihnen durchgeführten Wurfanalyen und statistischen Ergebnisse werden niemals auf unseren zentralen Servern gespeichert, an Dritte verkauft oder für Profiling verwendet. Alle Ihre historischen Wurfdaten werden ausschließlich im lokalen Speicher (Local Storage) Ihres eigenen Geräts aufbewahrt.</p>
+                    <p><strong>Google AdSense-Integration:</strong> Um einen ununterbrochenen und kostenlosen Service zu bieten, arbeiten wir mit Google AdSense zusammen, dem weltweit vertrauenswürdigsten Werbenetzwerk. Zwingend erforderliche Cookies werden verwendet, um unaufdringliche Anzeigen anzuzeigen, die Ihren Interessen entsprechen.</p>
+                `,
+                modalTermsTitle: "NUTZUNGSBEDINGUNGEN UND LIZENZVEREINBARUNG",
+                modalTermsText: `
+                    <p>Die HSR 3D Coin Flip-Plattform ist ausschließlich für Bildungszwecke, statistische Analysen und praktische Entscheidungsfindungen konzipiert. Durch die Nutzung dieses Systems akzeptieren Sie alle folgenden Bedingungen bedingungslos.</p>
+                    <p><strong>Haftungsausschluss und Anti-Glücksspiel-Richtlinie:</strong> Im Rahmen der Google AdSense-Richtlinien und internationaler Gesetze <strong>unterstützt unser System in keiner Weise Wetten, Glücksspiele oder illegale Lotterien</strong> und leitet nicht auf solche Websites weiter. Auf der Plattform können keine Finanztransaktionen durchgeführt werden.</p>
+                    <p>Unsere Plattform erzeugt rein algorithmische Ergebnisse. Diese Ergebnisse haben jedoch im wirklichen Leben keine rechtlich oder finanziell bindende Kraft; das System ist lediglich ein Simulationswerkzeug.</p>
+                `,
+                modalAboutTitle: "ÜBER HSR STUDIO UND KONTAKT",
+                modalAboutText: `
+                    <p>HSR Studio ist ein technologieorientiertes Softwareentwicklungszentrum, das innovative, transparente und hochsichere digitale Tools entwickelt, um moderne analytische Anforderungen zu erfüllen. Unser Hauptziel ist es, Plattformen aufzubauen, die den Alltag vereinfachen und makellose Schnittstellen bieten.</p>
+                    <p>Dieser 3D-Münzwurf- und Wahrscheinlichkeitssimulator wurde für Sie entwickelt, um Ihre Entscheidungsprozesse einem sicheren Algorithmus anzuvertrauen.</p>
+                    <p>Um Feedback zu geben oder Anfragen zu melden, können Sie unser Expertenteam rund um die Uhr über unsere offizielle Kommunikationsleitung erreichen.</p>
+                    <p style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-top: 20px;">Unternehmenskontakt: hsrstudio345@gmail.com</p>
+                `
+            },
+            es: {
+                title: "HSR 3D LANZAMIENTO DE MONEDA",
+                desc: "Simulador Avanzado de Probabilidad y Portal de Decisiones",
+                flipBtn: "INICIAR SIMULACIÓN",
+                flipBtnWait: "SIMULANDO...",
+                historyTitle: "Análisis y Estadísticas",
+                labelHeads: "Cara",
+                labelTails: "Cruz",
+                labelHistory: "Últimos Tiros:",
+                heads: "CARA",
+                tails: "CRUZ",
+                cookieText: "Nuestra plataforma utiliza cookies y estándares GDPR para guardar sus estadísticas de probabilidad localmente y proporcionarle anuncios de Google AdSense relevantes. Al usar el sistema, acepta nuestras políticas de datos.",
+                cookieBtn: "ACEPTO",
+                closeBtn: "CERRAR Y VOLVER",
+                footerPrivacy: "Política de Privacidad",
+                footerTerms: "Términos de Uso",
+                footerAbout: "Sobre Nosotros",
+                seoContent: `
+                    <h2>El Lanzamiento de Moneda Virtual y la Ciencia de la Probabilidad: La Anatomía Matemática de la Toma de Decisiones</h2>
+                    <p>A lo largo de la historia, lanzar una moneda ha sido uno de los métodos más confiables para tomar decisiones difíciles o resolver una disputa. Esta acción, cuya historia se remonta al siglo VII a.C. con los lidios, se ha convertido hoy en la herramienta de toma de decisiones más avanzada del mundo digital con el <strong>Simulador Virtual de Lanzamiento de Moneda 3D HSR</strong>. Está comprobado que las monedas físicas tradicionales no arrojan un resultado exactamente del 50%-50% debido a fallas físicas. Sin embargo, el sistema algorítmico en nuestra plataforma utiliza generadores de números pseudoaleatorios criptográficos (PRNG) para ofrecer una experiencia totalmente justa.</p>
+                    
+                    <h3>Teoría de la Probabilidad y Aleatoriedad Criptográfica</h3>
+                    <p>En la teoría de la probabilidad, lanzar una moneda justa se llama 'Ensayo de Bernoulli'. La probabilidad de que caiga en 'Cara' o 'Cruz' es teóricamente de 1/2. Mientras que las aplicaciones tradicionales dependen de factores físicos externos; el <strong>Portal 3D HSR</strong> utiliza la aleatoriedad matemática pura. En el momento en que presiona el botón, el sistema escanea miles de algoritmos numéricos y determina el resultado con absoluta aleatoriedad.</p>
+                `,
+                modalPrivacyTitle: "POLÍTICA DE PRIVACIDAD Y PROCESAMIENTO DE DATOS",
+                modalPrivacyText: `
+                    <p>En HSR Studio, la privacidad de los datos, la ciberseguridad y los derechos digitales de nuestros usuarios son nuestra prioridad. Las políticas de gestión de cookies implementadas en esta plataforma están integradas con las leyes internacionales de protección de datos, incluidas GDPR y CCPA.</p>
+                    <p><strong>Almacenamiento de Datos:</strong> Los análisis de los lanzamientos que realiza nunca se almacenan en nuestros servidores centrales, no se venden a terceros ni se utilizan para la elaboración de perfiles. Todo su historial se mantiene únicamente en la memoria local (Local Storage) de su propio dispositivo.</p>
+                    <p><strong>Integración de Google AdSense:</strong> Para brindar un servicio ininterrumpido y gratuito, trabajamos con Google AdSense. Las cookies obligatorias se utilizan para mostrar anuncios no intrusivos adaptados a sus intereses.</p>
+                `,
+                modalTermsTitle: "TÉRMINOS DE USO Y ACUERDO DE LICENCIA",
+                modalTermsText: `
+                    <p>La plataforma de Lanzamiento de Moneda 3D HSR está diseñada exclusivamente con fines educativos, de análisis estadístico y de toma de decisiones prácticas. Al utilizar este sistema, acepta incondicionalmente todos los siguientes términos.</p>
+                    <p><strong>Aviso Legal y Política Contra el Juego:</strong> En el marco de las políticas de Google AdSense y las leyes internacionales, nuestro sistema <strong>no apoya las apuestas, los juegos de azar o las loterías ilegales</strong> de ninguna manera. No se pueden realizar transacciones financieras en la plataforma.</p>
+                    <p>Nuestra plataforma produce resultados puramente algorítmicos. Sin embargo, estos resultados no tienen fuerza legal o financiera vinculante en la vida real; el sistema es únicamente una herramienta de simulación.</p>
+                `,
+                modalAboutTitle: "SOBRE HSR STUDIO Y CONTACTO",
+                modalAboutText: `
+                    <p>HSR Studio es un centro de desarrollo de software que crea herramientas digitales innovadoras, transparentes y altamente seguras para satisfacer las necesidades analíticas modernas. Nuestro objetivo principal es construir plataformas que simplifiquen la vida diaria y ofrezcan interfaces impecables.</p>
+                    <p>Este Simulador de Probabilidad 3D está diseñado para que confíe sus procesos de toma de decisiones a un algoritmo seguro.</p>
+                    <p>Para proporcionar comentarios o informar solicitudes, puede comunicarse con nuestro equipo de expertos las 24 horas del día a través de nuestra línea de comunicación oficial.</p>
+                    <p style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-top: 20px;">Contacto Corporativo: hsrstudio345@gmail.com</p>
+                `
+            }
+        };
+        // ==========================================
+        // 9. SİSTEM DEĞİŞKENLERİ VE YEREL HAFIZA KONTROLÜ
+        // ==========================================
+        let currentLang = 'tr';
+        let headsCount = 0;
+        let tailsCount = 0;
+        let isFlipping = false;
+        let currentRotation = 0;
+
+        const loadStats = () => {
+            const savedHeads = localStorage.getItem('hsr_pro_heads');
+            const savedTails = localStorage.getItem('hsr_pro_tails');
+            if(savedHeads) headsCount = parseInt(savedHeads);
+            if(savedTails) tailsCount = parseInt(savedTails);
+            updateStatsUI();
+        };
+
+        // ==========================================
+        // 10. ÇOKLU DİL (I18N) VE ARAYÜZ GÜNCELLEME MOTORU
+        // ==========================================
+        function changeLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            
+            // Buton aktiflik durumlarını güncelle
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+
+            // UI Metinlerini Güncelle
+            const data = siteData[lang];
+            document.title = data.title;
+            document.getElementById('site-title').innerText = data.title;
+            document.getElementById('site-desc').innerText = data.desc;
+            
+            if(!isFlipping) document.getElementById('flip-btn').innerText = data.flipBtn;
+            
+            document.getElementById('history-title').innerText = data.historyTitle;
+            document.getElementById('label-heads').innerText = data.labelHeads;
+            document.getElementById('label-tails').innerText = data.labelTails;
+            document.getElementById('label-history').innerText = data.labelHistory;
+            
+            document.getElementById('coin-front-text').innerText = data.heads;
+            document.getElementById('coin-back-text').innerText = data.tails;
+
+            document.getElementById('cookie-text').innerText = data.cookieText;
+            document.getElementById('accept-cookies').innerText = data.cookieBtn;
+            document.getElementById('ultimate-close-btn').innerText = data.closeBtn;
+
+            document.getElementById('link-privacy').innerText = data.footerPrivacy;
+            document.getElementById('link-terms').innerText = data.footerTerms;
+            document.getElementById('link-about').innerText = data.footerAbout;
+
+            // Devasa SEO Makalesini Ekrana Bas
+            document.getElementById('seo-content-container').innerHTML = data.seoContent;
+        }
+
+        // ==========================================
+        // 11. ULTIMATE HUKUK VE GİZLİLİK PANELİ KONTROLLERİ
+        // ==========================================
+        function openUltimateModal(type) {
+            const data = siteData[currentLang];
+            let title = '';
+            let text = '';
+
+            if (type === 'privacy') {
+                title = data.modalPrivacyTitle;
+                text = data.modalPrivacyText;
+            } else if (type === 'terms') {
+                title = data.modalTermsTitle;
+                text = data.modalTermsText;
+            } else if (type === 'about') {
+                title = data.modalAboutTitle;
+                text = data.modalAboutText;
+            }
+
+            document.getElementById('ultimate-modal-title').innerText = title;
+            document.getElementById('ultimate-modal-body').innerHTML = text;
+            document.getElementById('ultimate-modal').classList.add('active');
+        }
+
+        function closeUltimateModal() {
+            document.getElementById('ultimate-modal').classList.remove('active');
+        }
+
+        // Modal dışına (siyah alana) tıklayınca kapatma özelliği
+        document.getElementById('ultimate-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'ultimate-modal') closeUltimateModal();
+        });
+
+        // ==========================================
+        // 12. KRİPTOGRAFİK YAZI TURA SİMÜLASYONU VE İSTATİSTİKLER
+        // ==========================================
+        function getSecureRandom() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        function updateStatsUI() {
+            document.getElementById('count-heads').innerText = headsCount;
+            document.getElementById('count-tails').innerText = tailsCount;
+            localStorage.setItem('hsr_pro_heads', headsCount);
+            localStorage.setItem('hsr_pro_tails', tailsCount);
+        }
+
+        function addToHistory(resultStr, isHeads) {
+            const list = document.getElementById('history-list');
+            const li = document.createElement('li');
+            li.className = 'history-item ' + (isHeads ? 'heads' : 'tails');
+            
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+            
+            li.innerHTML = `<span>${resultStr}</span> <span style="font-size:0.75rem; color:var(--text-muted);">${timeStr}</span>`;
+            list.prepend(li);
+            
+            // Listeyi 15 öğe ile sınırla (Taşmaları önlemek için)
+            if(list.children.length > 15) list.removeChild(list.lastChild);
+        }
+
+        document.getElementById('flip-btn').addEventListener('click', () => {
+            if (isFlipping) return;
+            isFlipping = true;
+            
+            const btn = document.getElementById('flip-btn');
+            const resultDisplay = document.getElementById('result-display');
+            const coin = document.getElementById('coin');
+            const data = siteData[currentLang];
+            
+            btn.innerText = data.flipBtnWait;
+            btn.disabled = true;
+            resultDisplay.innerHTML = '...';
+            resultDisplay.classList.remove('result-highlight');
+
+            // %50 Şans Kriptografik Rastgelelik
+            const isHeads = getSecureRandom() < 0.5;
+            
+            // En az 5 tam tur dönsün
+            const minSpins = 5;
+            const extraDegrees = isHeads ? 0 : 180;
+            currentRotation += (minSpins * 360) + extraDegrees;
+            
+            // Açı Düzeltmesi
+            if (currentRotation % 360 !== 0 && isHeads) {
+                currentRotation += 180;
+            } else if (currentRotation % 360 === 0 && !isHeads) {
+                currentRotation += 180;
+            }
+
+            coin.style.transform = `rotateY(${currentRotation}deg)`;
+
+            // 3 saniye sonra sonucu ekrana bas
+            setTimeout(() => {
+                const finalResult = isHeads ? data.heads : data.tails;
+                resultDisplay.innerHTML = finalResult;
+                resultDisplay.classList.add('result-highlight');
+                
+                if (isHeads) headsCount++; else tailsCount++;
+                
+                updateStatsUI();
+                addToHistory(finalResult, isHeads);
+
+                btn.innerText = data.flipBtn;
+                btn.disabled = false;
+                isFlipping = false;
+            }, 3000);
+        });
+
+        // ==========================================
+        // 13. ÇEREZ (GDPR) KONTROLÜ VE BAŞLATICI
+        // ==========================================
+        const cookieBanner = document.getElementById('cookie-banner');
+        const acceptCookiesBtn = document.getElementById('accept-cookies');
+
+        if (!localStorage.getItem('hsr_pro_cookies_accepted')) {
+            setTimeout(() => cookieBanner.classList.add('show'), 1500);
+        }
+
+        acceptCookiesBtn.addEventListener('click', () => {
+            localStorage.setItem('hsr_pro_cookies_accepted', 'true');
+            cookieBanner.classList.remove('show');
+        });
+
+        // Site yüklendiğinde çalışacaklar
+        window.onload = () => {
+            loadStats();
+            changeLang('tr'); // Varsayılan dili Türkçe başlat
+            console.log(">> HSR PRO 3D COIN FLIP (ULTIMATE EDITION) INITIALIZED.");
+        };
+
+    </script>
+</body>
+</html>
